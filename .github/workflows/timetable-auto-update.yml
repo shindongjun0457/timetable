@@ -1,0 +1,42 @@
+name: Timetable Auto Update (every 30min)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # 매 30분 (UTC 기준)
+  workflow_dispatch:          # 필요시 수동 실행
+
+permissions:
+  contents: write             # 커밋/푸시 권한
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul          # Node가 KST로 동작하도록
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Generate timetable.json
+        run: npm run build:data
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet public/data/timetable.json; then
+            git add public/data/timetable.json
+            git commit -m "chore: auto-update timetable [skip ci]"
+            git push
+          else
+            echo "No changes in timetable.json"
+          fi

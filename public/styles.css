@@ -1,0 +1,156 @@
+:root{
+  --border:#e5e7eb;
+  --bg:#ffffff;
+  --head:#f8fafc;
+  --text:#111827;
+  --muted:#6b7280;
+  --sticky-z: 2;
+
+  /* 학년 배경색(은은한 톤) */
+  --g1:#eff6ff;  /* 1학년: 하늘색 */
+  --g2:#f0fdf4;  /* 2학년: 연두색 */
+  --g3:#fff7ed;  /* 3학년: 살구색 */
+}
+
+*{box-sizing:border-box;}
+html,body{
+  height:100%;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', sans-serif;
+  overflow:hidden; /* 화면 꽉 채우기: 스크롤 감춤 */
+}
+
+/* 화면 전체 레이아웃: 위(툴바) - 가운데(테이블) - 아래(푸터) */
+.wrap{
+  width:100vw;
+  height:100vh;
+  min-height:100vh;
+  margin:0;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:4px 0;
+}
+.toolbar h1{font-size:18px;margin:0;}
+.controls select{
+  padding:6px 8px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:#fff;
+}
+
+/* 중앙 영역이 남는 모든 높이를 차지 */
+#tableSection{
+  flex:1 1 auto;
+  min-height:0;            /* 내부 스크롤 방지 */
+  display:flex;
+}
+
+.gridWrap{
+  flex:1 1 auto;
+  overflow:hidden;         /* 가로/세로 스크롤 숨김 */
+  border:1px solid var(--border);
+  border-radius:12px;
+  position: relative;
+}
+
+/* 축소/확대 스케일 컨테이너 */
+#scaleBox{
+  transform-origin: top left;
+  /* width/height는 JS에서 동적으로 지정 */
+}
+
+/* 테이블: '모든 칸 동일 폭'을 위해 fixed 레이아웃 */
+.timetable{
+  table-layout: fixed;     /* ⬅️ 칸 폭 고정 */
+  border-collapse:separate;
+  border-spacing:0;
+  width:auto;              /* 실제 폭은 colgroup 폭 합으로 결정 */
+}
+.timetable th, .timetable td{
+  border-bottom:1px solid var(--border);
+  border-right:1px solid var(--border);
+  padding:16px 12px;       /* ⬅️ 세로 여유 더 키움(기존 14px → 16px) */
+  vertical-align:middle;
+  white-space:normal;      
+  font-size:18px;          /* ⬅️ 글씨 크게(기존 15px → 18px) */
+  text-align:center;
+}
+
+
+.timetable th:first-child, .timetable td:first-child{border-left:1px solid var(--border);}
+.timetable tr:first-child th{border-top:1px solid var(--border);}
+.timetable th{background:var(--head);font-weight:600;}
+
+/* sticky 헤더/좌측라벨 (스케일 off일 때만 유효) */
+.timetable .sticky-top{position:sticky;top:0;z-index:var(--sticky-z);}
+.timetable .sticky-left{position:sticky;left:0;background:var(--head);z-index:var(--sticky-z);}
+
+/* 스케일 적용 시 sticky 비활성(렌더링 이슈 회피) */
+#scaleBox.scaled .sticky-top,
+#scaleBox.scaled .sticky-left { position: static; }
+
+/* 학년 밴드(헤더 상단) */
+.timetable .grade-band{ text-align:center; font-weight:700 }
+.timetable .band-1{ background: var(--g1); }
+.timetable .band-2{ background: var(--g2); }
+.timetable .band-3{ background: var(--g3); }
+
+/* 학년별 본문 칸 배경 */
+td.grade-1{ background: var(--g1); }
+td.grade-2{ background: var(--g2); }
+td.grade-3{ background: var(--g3); }
+
+/* 과목 셀: 가운데 정렬(세로/가로) + 행 높이 보장 */
+.cell{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  min-height:50px;         /* ⬅️ 행 높이 업(기존 56px → 64px) */
+  line-height:1.4;
+}
+
+/* 좌측(교시) 칼럼 폭은 명시적으로 조금 넓게 */
+th.left-col{ width:96px; }
+
+/* footer */
+.foot{ color: var(--muted); }
+.foot small{
+  font-size:16px;     /* 글씨 크게 */
+  font-weight:600;    /* 살짝 두껍게 */
+}
+
+/* 새로 고침 버튼 */
+.btn{
+  appearance:none;
+  border:1px solid var(--border);
+  background:#fff;
+  padding:8px 12px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:14px;
+  cursor:pointer;
+}
+.btn:hover{ background:#f9fafb; }
+.btn[disabled]{ opacity:0.6; cursor:progress; }
+
+/* 로딩 애니메이션 */
+.btn .spin{
+  display:inline-block;
+  transition: transform .6s linear;
+}
+.btn[aria-busy="true"] .spin{
+  transform: rotate(360deg);
+}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>오현중 시간표 (1·2·3학년)</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="toolbar">
+      <h1>오현중 시간표 (1·2·3학년)</h1>
+      <div class="controls">
+        <label>요일:
+          <select id="weekdaySelect">
+            <option value="0">월</option>
+            <option value="1">화</option>
+            <option value="2">수</option>
+            <option value="3">목</option>
+            <option value="4">금</option>
+          </select>
+        </label>
+        <button id="refreshBtn" class="btn" type="button" title="데이터 다시 불러오기">
+    <span class="spin">↻</span> 새로 고침
+  </button>
+      </div>
+    </header>
+
+    <section id="tableSection">
+      <div class="gridWrap">
+        <!-- ⬇️ 이 박스가 내부 테이블을 컨테이너 폭에 맞게 축소합니다 -->
+        <div id="scaleBox">
+          <table id="timetable" class="timetable">
+            <!-- JS가 채웁니다 -->
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <small id="metaText">Loading…</small>
+    </footer>
+  </div>
+
+  <script src="./app.js" type="module"></script>
+</body>
+</html>
