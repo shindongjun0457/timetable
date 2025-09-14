@@ -1,0 +1,15 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Local/Build
+dist/
+*.log
+
+# Wrangler local files (있다면)
+.wrangler/
+
+# 데이터 파일은 빌드 때 생성 (Cloudflare Pages에서 npm run build로 생성)
+public/data/timetable.json
+
