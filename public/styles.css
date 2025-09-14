@@ -37,11 +37,12 @@ html,body{
 .toolbar{
   display:flex;
   justify-content:space-between;
+  
   align-items:center;
   gap:12px;
   padding:4px 0;
 }
-.toolbar h1{font-size:18px;margin:0;}
+.toolbar h1{font-size:36px;margin:0;}
 .controls select{
   padding:6px 8px;
   border:1px solid var(--border);
@@ -80,10 +81,10 @@ html,body{
 .timetable th, .timetable td{
   border-bottom:1px solid var(--border);
   border-right:1px solid var(--border);
-  padding:16px 12px;       /* ⬅️ 세로 여유 더 키움(기존 14px → 16px) */
+  padding:18px 12px;       /* ⬅️ 세로 여유 더 키움(기존 14px → 16px) */
   vertical-align:middle;
   white-space:normal;      
-  font-size:18px;          /* ⬅️ 글씨 크게(기존 15px → 18px) */
+  font-size:22px;          /* ⬅️ 글씨 크게(기존 15px → 18px) */
   text-align:center;
 }
 
@@ -120,10 +121,11 @@ td.grade-3{ background: var(--g3); }
   height:100%;
   min-height:50px;         /* ⬅️ 행 높이 업(기존 56px → 64px) */
   line-height:1.4;
+  font-weight:700;
 }
 
 /* 좌측(교시) 칼럼 폭은 명시적으로 조금 넓게 */
-th.left-col{ width:96px; }
+th.left-col{ width:110px; }
 
 /* footer */
 .foot{ color: var(--muted); }
