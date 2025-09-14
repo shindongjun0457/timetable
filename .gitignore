@@ -13,3 +13,6 @@ dist/
 # 데이터 파일은 빌드 때 생성 (Cloudflare Pages에서 npm run build로 생성)
 public/data/timetable.json
 
+node_modules/
+public/data/timetable.json
+timetable.git/
