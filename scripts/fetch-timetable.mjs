@@ -3,12 +3,8 @@ import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
-import dayjs from "dayjs";
-import "dayjs/locale/ko.js";
 
 const require = createRequire(import.meta.url);
-// CJS 모듈 로드
-const Timetable = require("comcigan-parser");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +16,26 @@ const CLASSES_PER_GRADE = 7;
 const PERIODS = 7;
 const WEEKDAYS = ["월", "화", "수", "목", "금"]; // 월~금만
 
+const argv = process.argv.slice(2);
+const FORCE = argv.includes("--force");
+
+function loadTimetableModule(force = false) {
+  const modPath = require.resolve("comcigan-parser");
+  if (force && require.cache[modPath]) {
+    delete require.cache[modPath]; // 🔥 모듈 캐시 제거
+    console.log("♻️  comcigan-parser module cache cleared (force mode)");
+  }
+  // CJS 반환값(클래스 생성자)
+  const Timetable = require("comcigan-parser");
+  return Timetable;
+}
+
+function buildColumns() {
+  const columns = [];
+  for (const g of GRADES) for (let c = 1; c <= CLASSES_PER_GRADE; c++) columns.push(`${g}-${c}`);
+  return columns;
+}
+
 function ensureTableShape() {
   // table[weekday][period][column] -> 과목 문자열
   return Array.from({ length: WEEKDAYS.length }, () =>
@@ -28,29 +44,37 @@ function ensureTableShape() {
 }
 
 function subjectFromDayArray(dayArray, periodIdx1based) {
-  // comcigan-parser의 하루 데이터는 [{ classTime: 1.., subject, teacher, ... }, ...] 형태
   const hit = (dayArray || []).find((x) => Number(x?.classTime) === periodIdx1based);
   return hit?.subject ?? "";
 }
 
+function nowKSTString() {
+  const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const HH = String(d.getUTCHours()).padStart(2, "0");
+  const MM = String(d.getUTCMinutes()).padStart(2, "0");
+  const SS = String(d.getUTCSeconds()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${HH}:${MM}:${SS}`;
+}
+
+async function fetchAllTimetable(force = false) {
+  const Timetable = loadTimetableModule(force);   // 🚀 재로딩 가능
+  let tt = new Timetable();                       // ♻️ 새 인스턴스 생성
+  await tt.init({ cache: 0 });                    // 내부 캐시 완전 비활성
+  await tt.setSchool(SCHOOL_CODE);
+  const all = await tt.getTimetable();
+  return all;
+}
+
 async function main() {
-  dayjs.locale("ko");
+  console.log(`Start fetch timetable (force=${FORCE})`);
+  const all = await fetchAllTimetable(FORCE);
 
-  const timetable = new Timetable();
-  await timetable.init({ cache: 1000 * 60 * 30 }); // 30분 캐시(선택)
-  await timetable.setSchool(SCHOOL_CODE);
-
-  // 전교 시간표  [grade][class][weekday][{classTime, subject, teacher...}]
-  const all = await timetable.getTimetable();
-
-  // 출력 컬럼 라벨 생성: ['1-1','1-2',...,'3-7']
-  const columns = [];
-  for (const g of GRADES) for (let c = 1; c <= CLASSES_PER_GRADE; c++) columns.push(`${g}-${c}`);
-
-  // 결과 테이블 생성
+  const columns = buildColumns();
   const table = ensureTableShape();
 
-  // 각 반을 column 인덱스로 펼치기
   let col = 0;
   for (const g of GRADES) {
     for (let c = 1; c <= CLASSES_PER_GRADE; c++) {
@@ -65,11 +89,10 @@ async function main() {
     }
   }
 
-  // JSON 저장
   const out = {
     meta: {
       schoolCode: SCHOOL_CODE,
-      updatedAtKST: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+      updatedAtKST: nowKSTString(),
       weekdays: WEEKDAYS,
       periods: Array.from({ length: PERIODS }, (_, i) => i + 1),
       columns
@@ -80,7 +103,7 @@ async function main() {
   const dataDir = path.join(__dirname, "..", "public", "data");
   await fs.mkdir(dataDir, { recursive: true });
   await fs.writeFile(path.join(dataDir, "timetable.json"), JSON.stringify(out, null, 2), "utf-8");
-  console.log("✅ timetable.json 갱신 완료");
+  console.log("✅ timetable.json 갱신 완료 (force:", FORCE, ")");
 }
 
 main().catch((e) => {

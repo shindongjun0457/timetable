@@ -1,12 +1,13 @@
 {
   "name": "ohyun-timetable",
   "version": "1.0.0",
-  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "wrangler pages dev public --local",
     "build:data": "node ./scripts/fetch-timetable.mjs",
-    "build": "npm run build:data",
+    "build:data:force": "node ./scripts/fetch-timetable.mjs --force",
+    "build": "npm run build:data:force",
     "preview": "wrangler pages dev public --local"
   },
   "dependencies": {
