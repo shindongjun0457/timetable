@@ -136,43 +136,60 @@ function buildTable() {
   $("#metaText").textContent = `© OHYUN Middle School · 업데이트: ${meta.updatedAtKST}`;
 }
 
-/** 컨테이너(그리드박스) 폭/높이에 맞춰 테이블 자동 스케일
- *  ⬅️ 확대도 허용(상한 제거) → 브라우저 키우면 계속 커짐 */
 function fitScale() {
   const gridWrap = document.querySelector(".gridWrap");
   const scaleBox = document.getElementById("scaleBox");
   const table = document.getElementById("timetable");
   if (!gridWrap || !scaleBox || !table) return;
 
-  // 우선 원래 크기로 되돌려 실제 크기 측정
+  // 0) 초기화: 실크기 측정
   scaleBox.style.transform = "scale(1)";
   scaleBox.classList.remove("scaled");
   scaleBox.style.width = "";
   scaleBox.style.height = "";
 
-  // 컨테이너 가용 영역
   const containerW = gridWrap.clientWidth;
   const containerH = gridWrap.clientHeight;
 
-  // 테이블 자연 크기
+  // 1) 가로 기준 스케일(폭을 꽉 채움)
+  const tableW0 = table.scrollWidth;
+  const scale = containerW / tableW0;        // 확대/축소 모두 허용
+
+  // 2) 세로 맞춤: 스케일된 총 높이가 컨테이너에 맞도록 1행 min-height 계산
+  //    목표: (thead높이 + 행수*행높이) * scale ≈ containerH
+  const thead = table.tHead;
+  const tbody = table.tBodies[0];
+  const headH0 = thead ? thead.offsetHeight : 0;       // 스케일 전 헤더 높이
+  const rows = tbody ? tbody.rows.length : 0;          // 보통 7교시 = 7
+
+  // 스케일 전 기준에서 목표 테이블 높이
+  const targetTableH0 = containerH / scale;
+
+  // 헤더외 여유(테두리 등 보정치)
+  const fudge = 8;
+
+  // 1행 최소 높이(px) 계산 + 안전 범위로 clamp
+  let rowMin0 = (targetTableH0 - headH0 - fudge) / Math.max(rows, 1);
+  const CLAMP_MIN = 40;   // 너무 쪼개지지 않게 최소
+  const CLAMP_MAX = 140;  // 너무 길어지지 않게 최대 (원하면 취향대로 조정)
+  rowMin0 = Math.max(CLAMP_MIN, Math.min(CLAMP_MAX, Math.floor(rowMin0)));
+
+  // CSS 변수 주입 (스케일 전 기준값)
+  document.documentElement.style.setProperty("--row-min-h", `${rowMin0}px`);
+
+  // 3) 최종 치수 재측정 후 스케일 적용
   const tableW = table.scrollWidth;
   const tableH = table.scrollHeight;
 
-  // 가로/세로 중 더 작은 쪽 기준으로 '꽉 차게'
-  const scaleW = containerW / tableW;
-  const scaleH = containerH / tableH;
-  const scale = Math.min(scaleW, scaleH); // ⬅️ 1로 제한하지 않음(확대 허용)
-
-  // 스케일 적용 및 크기 보정
   scaleBox.style.transform = `scale(${scale})`;
-  if (Math.abs(scale - 1) > 0.001) {
-    scaleBox.classList.add("scaled"); // sticky 비활성
-  } else {
-    scaleBox.classList.remove("scaled");
-  }
+  scaleBox.classList.toggle("scaled", Math.abs(scale - 1) > 0.001);
   scaleBox.style.width  = `${tableW * scale}px`;
   scaleBox.style.height = `${tableH * scale}px`;
+
+  // 세로 넘치면 내부 스크롤 표시(옵션)
+  gridWrap.classList.toggle("canScrollY", tableH * scale > containerH);
 }
+
 
 async function loadData() {
   const res = await fetch("./data/timetable.json", { cache: "no-store" });
