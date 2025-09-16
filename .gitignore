@@ -14,5 +14,5 @@ dist/
 public/data/timetable.json
 
 node_modules/
-public/data/timetable.json
+!public/data/timetable.json
 timetable.git/
