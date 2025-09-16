@@ -2,17 +2,17 @@ name: Timetable Auto Update (every 30min)
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # 매 30분 (UTC 기준)
-  workflow_dispatch:          # 필요시 수동 실행
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
 
 permissions:
-  contents: write             # 커밋/푸시 권한
+  contents: write
 
 jobs:
   build-and-commit:
     runs-on: ubuntu-latest
     env:
-      TZ: Asia/Seoul          # Node가 KST로 동작하도록
+      TZ: Asia/Seoul
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,15 +23,38 @@ jobs:
           node-version: "20"
           cache: npm
 
-      - name: Install deps
-        run: npm ci
+      - name: Install deps (retry x3)
+        shell: bash
+        run: |
+          set -e
+          for i in 1 2 3; do
+            echo "npm ci try $i/3"
+            if npm ci; then exit 0; fi
+            echo "retry in 15s"; sleep 15
+          done
+          echo "::warning::npm ci failed 3 times, but continuing"
+          exit 0
 
-      - name: Generate timetable.json
-        run: npm run build:data
+      - name: Generate timetable.json (retry x3, never fail)
+        shell: bash
+        run: |
+          set -e
+          ok=0
+          for i in 1 2 3; do
+            echo "build:data:force try $i/3"
+            if npm run build:data:force; then ok=1; break; fi
+            echo "retry in 30s"; sleep 30
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "::warning::Failed to fetch timetable after 3 tries; skipping commit"
+            # 성공으로 종료 → 알림 안 옴
+            exit 0
+          fi
 
       - name: Commit if changed
+        shell: bash
         run: |
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if ! git diff --quiet public/data/timetable.json; then
             git add public/data/timetable.json
